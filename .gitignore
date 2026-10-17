@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local runtime
+*.log
+*.bak*
+searxng-src/
+searxng.log
+searxng-proxy-sync.log
