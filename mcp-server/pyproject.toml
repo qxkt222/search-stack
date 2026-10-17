@@ -1,0 +1,34 @@
+[project]
+name = "search-mcp"
+version = "0.1.0"
+description = "Search MCP server backed by SearXNG"
+readme = "README.md"
+authors = [
+    { name = "qxkt222", email = "qxkt222@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "httpx>=0.28.1",
+    "lxml>=6.0.0",
+    "mcp[cli]>=2.3.0",
+    "trafilatura>=2.3.0",
+]
+
+[project.scripts]
+search-mcp = "search_mcp.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

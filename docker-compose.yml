@@ -1,3 +1,15 @@
+# ============================================================
+# search-stack - Docker deployment (SearXNG only)
+#
+# Usage:
+#   PowerShell:  $env:SEARXNG_SECRET = "<random-string>"; docker compose up -d
+#   bash:        export SEARXNG_SECRET="$(openssl rand -hex 32)"; docker compose up -d
+#
+# The search MCP server runs on the HOST in stdio mode and connects to
+# http://localhost:8888. An optional MCP container is kept commented out
+# below: it requires a Dockerfile in ./mcp-server and has NOT been tested.
+# ============================================================
+
 services:
   searxng:
     image: searxng/searxng:latest
@@ -7,5 +19,35 @@ services:
       - "8888:8080"
     environment:
       - SEARXNG_BASE_URL=http://localhost:8888/
+      # Override server.secret_key from searxng-settings.yml.
+      # Always set SEARXNG_SECRET in your shell or a local .env file;
+      # the default below is a placeholder, not a real secret.
+      - SEARXNG_SECRET=${SEARXNG_SECRET:-change-me-to-a-random-secret}
     volumes:
       - ./searxng-settings.yml:/etc/searxng/settings.yml:ro
+    healthcheck:
+      # Prefer busybox wget; fall back to the image's Python interpreter.
+      test:
+        - CMD-SHELL
+        - "wget -q -O /dev/null http://localhost:8080/healthz || python -c \"import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/healthz', timeout=3).status == 200 else 1)\""
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+# --- Optional MCP container (NOT tested; needs ./mcp-server/Dockerfile) ---
+# The recommended setup is to run search-mcp on the host in stdio mode.
+#
+#  mcp:
+#    build:
+#      context: ./mcp-server
+#    container_name: search-mcp
+#    restart: unless-stopped
+#    depends_on:
+#      searxng:
+#        condition: service_healthy
+#    environment:
+#      - SEARXNG_URL=http://searxng:8080
+#      - SEARCH_MCP_TIMEOUT=20
+#      - SEARCH_MCP_CACHE_TTL=300
+#      # - SEARCH_MCP_PROXY=http://<PROXY_HOST>:<PROXY_PORT>

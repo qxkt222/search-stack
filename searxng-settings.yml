@@ -29,23 +29,34 @@ outgoing:
   request_timeout: 5.0
   max_request_timeout: 10.0
 
-# 只调对抓取友好的引擎；Google/Bing 反爬强，默认禁用
+# 引擎开关与权重（Docker 覆盖式配置），与原生 searxng-local-settings.yml 的策略保持一致
 engines:
   - name: google
-    disabled: true
+    disabled: false
+    weight: 1.5
   - name: bing
     disabled: false
+    weight: 1.4
   - name: duckduckgo
     disabled: false
+    weight: 1.2
   - name: brave
     disabled: false
+    weight: 1.4
   - name: mojeek
     disabled: false
+    weight: 1.0
   - name: startpage
     disabled: false
+    weight: 1.3
   - name: qwant
     disabled: false
+    weight: 1.1
   - name: wikipedia
     disabled: false
+    weight: 1.2
   - name: wikidata
     disabled: false
+  - name: crossref
+    disabled: false
+    weight: 1.0

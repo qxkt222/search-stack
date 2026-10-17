@@ -482,6 +482,7 @@ engines:
   - name: arxiv
     engine: arxiv
     shortcut: arx
+    weight: 1.0
 
   - name: avalw
     engine: json_engine
@@ -561,6 +562,7 @@ engines:
   - name: wikipedia
     engine: wikipedia
     shortcut: wp
+    weight: 1.2
     # add "list" to the array to get results in the results list
     display_type: ["infobox"]
     categories: [general]
@@ -573,8 +575,8 @@ engines:
   - name: bing
     engine: bing
     shortcut: bi
-    disabled: true
-    # base_url: https://cn.bing.com  # for instances hosted in China
+    weight: 1.4
+    base_url: https://cn.bing.com  # www.bing.com 会 302 到 cn.bing.com，而 SearXNG 不跟随重定向
 
   - name: bing images
     engine: bing_images
@@ -725,8 +727,8 @@ engines:
   - name: crossref
     engine: crossref
     shortcut: cr
+    weight: 1.0
     timeout: 30
-    disabled: true
 
   - name: crowdview
     engine: json_engine
@@ -887,6 +889,7 @@ engines:
   - name: duckduckgo
     engine: duckduckgo
     shortcut: ddg
+    weight: 1.2
 
   - name: duckduckgo web
     engine: duckduckgo_web
@@ -1177,6 +1180,7 @@ engines:
   - name: github
     engine: github
     shortcut: gh
+    weight: 1.0
 
   - name: github code
     engine: github_code
@@ -1223,7 +1227,8 @@ engines:
   - name: google
     engine: google
     shortcut: go
-    inactive: true
+    weight: 1.5
+    inactive: false
 
   - name: google images
     engine: google_images
@@ -1252,6 +1257,7 @@ engines:
   - name: google scholar
     engine: google_scholar
     shortcut: gos
+    weight: 1.0
 
   - name: google play apps
     engine: google_play
@@ -1690,6 +1696,7 @@ engines:
 
   - name: mdn
     shortcut: mdn
+    weight: 1.0
     engine: json_engine
     categories: [it]
     paging: true
@@ -2062,6 +2069,7 @@ engines:
   - name: pubmed
     engine: pubmed
     shortcut: pub
+    weight: 1.0
 
   - name: pypi
     shortcut: pypi
@@ -2085,8 +2093,8 @@ engines:
     qwant_categ: web
     engine: qwant
     shortcut: qw
+    weight: 1.1
     categories: [general, web]
-    disabled: true
 
   - name: qwant news
     qwant_categ: news
@@ -2242,6 +2250,7 @@ engines:
   - name: stackoverflow
     engine: stackexchange
     shortcut: st
+    weight: 1.0
     api_site: 'stackoverflow'
     categories: [it, q&a]
 
@@ -2324,6 +2333,7 @@ engines:
   - name: semantic scholar
     engine: semantic_scholar
     shortcut: se
+    weight: 1.0
 
   # Spotify needs API credentials
   # - name: spotify
@@ -2354,6 +2364,7 @@ engines:
   - name: startpage
     engine: startpage
     shortcut: sp
+    weight: 1.3
     startpage_categ: web
     categories: [general, web]
 
@@ -2832,9 +2843,9 @@ engines:
 
   - name: mojeek
     shortcut: mjk
+    weight: 1.0
     engine: mojeek
     categories: [general, web]
-    disabled: true
 
   - name: mojeek images
     shortcut: mjkimg
@@ -3236,6 +3247,7 @@ engines:
   - name: brave
     engine: brave
     shortcut: br
+    weight: 1.4
     time_range_support: true
     paging: true
     categories: [general, web]
