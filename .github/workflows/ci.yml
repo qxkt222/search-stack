@@ -26,7 +26,7 @@ jobs:
         working-directory: mcp-server
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       # 测试全部走 httpx.MockTransport，不依赖真实 SearXNG 实例
