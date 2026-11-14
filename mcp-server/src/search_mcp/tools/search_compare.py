@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 
 from .. import client, core
@@ -42,31 +41,20 @@ async def search_compare(
         categories = core.check_optional_text(categories, "categories")
         language = core.check_optional_text(language, "language")
 
-        semaphore = asyncio.Semaphore(min(8, len(engines)))
+        async def run_search(engine: str) -> dict[str, Any]:
+            return await client.search(
+                query,
+                max_results=max_results,
+                categories=categories,
+                engines=engine,
+                time_range=time_range,
+                pageno=pageno,
+                language=language,
+            )
 
-        async def run_one(engine: str) -> tuple[str, list[dict[str, Any]], str | None]:
-            async with semaphore:
-                try:
-                    result = await client.search(
-                        query,
-                        max_results=max_results,
-                        categories=categories,
-                        engines=engine,
-                        time_range=time_range,
-                        pageno=pageno,
-                        language=language,
-                    )
-                    return engine, list(result.get("results") or []), None
-                except Exception as exc:
-                    return engine, [], str(exc) or type(exc).__name__
-
-        outcomes = await asyncio.gather(*(run_one(name) for name in engines))
-        per_engine: dict[str, list[dict[str, Any]]] = {}
-        errors: dict[str, str] = {}
-        for engine, results, error in outcomes:
-            per_engine[engine] = results
-            if error:
-                errors[engine] = error
+        per_engine, errors = await client.search_many(
+            engines, run_search, limit=min(8, len(engines))
+        )
 
         return core.ok({"query": query, "engines": per_engine, "errors": errors})
     except Exception as exc:

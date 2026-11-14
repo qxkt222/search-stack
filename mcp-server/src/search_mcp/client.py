@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import httpx
@@ -257,6 +258,38 @@ async def search(
     mapped = _map_search(data, query, max_results)
     core.CACHE.set(key, mapped, cfg.search_ttl)
     return mapped
+
+
+async def search_many(
+    names: list[str],
+    make_call: Callable[[str], Awaitable[dict[str, Any]]],
+    *,
+    limit: int,
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
+    """Run one search per name with bounded concurrency.
+
+    Returns ``(results_by_name, errors_by_name)``. A failing search contributes
+    an empty list plus its message; it never aborts the other names.
+    """
+
+    semaphore = asyncio.Semaphore(limit)
+
+    async def run_one(name: str) -> tuple[str, list[dict[str, Any]], str | None]:
+        async with semaphore:
+            try:
+                result = await make_call(name)
+                return name, list(result.get("results") or []), None
+            except Exception as exc:
+                return name, [], str(exc) or type(exc).__name__
+
+    outcomes = await asyncio.gather(*(run_one(name) for name in names))
+    by_name: dict[str, list[dict[str, Any]]] = {}
+    errors: dict[str, str] = {}
+    for name, results, error in outcomes:
+        by_name[name] = results
+        if error:
+            errors[name] = error
+    return by_name, errors
 
 
 async def fetch(url: str, use_proxy: bool | None = None) -> httpx.Response:

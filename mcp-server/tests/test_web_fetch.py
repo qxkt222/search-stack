@@ -170,6 +170,76 @@ async def test_web_fetch_include_links(
 
 
 @pytest.mark.asyncio
+async def test_web_fetch_save_to_writes_text(
+    install_transport: Callable[..., Any],
+    tmp_path: Any,
+) -> None:
+    install_transport(lambda request: _html_response(ARTICLE))
+    target = tmp_path / "nested" / "article.txt"
+
+    result = await web_fetch("https://site.test/article", save_to=str(target))
+
+    assert result["ok"] is True
+    assert target.read_text(encoding="utf-8") == result["result"]["text"]
+    # The envelope keeps its documented shape; nothing extra is reported.
+    assert "saved_to" not in result["result"]
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_save_to_empty_is_no_write(
+    install_transport: Callable[..., Any],
+    tmp_path: Any,
+) -> None:
+    install_transport(lambda request: _html_response(ARTICLE))
+
+    result = await web_fetch("https://site.test/article", save_to="")
+
+    assert result["ok"] is True
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_save_to_on_cache_hit(
+    install_transport: Callable[..., Any],
+    tmp_path: Any,
+) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return _html_response(ARTICLE)
+
+    install_transport(handler)
+    first = await web_fetch("https://site.test/page", save_to=str(tmp_path / "a.txt"))
+    second = await web_fetch("https://site.test/page", save_to=str(tmp_path / "b.txt"))
+
+    assert calls == 1
+    assert first["result"]["text"] == second["result"]["text"]
+    assert (tmp_path / "a.txt").read_text(encoding="utf-8") == first["result"]["text"]
+    assert (tmp_path / "b.txt").read_text(encoding="utf-8") == first["result"]["text"]
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_rejects_bad_save_to(
+    install_transport: Callable[..., Any],
+) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return _html_response(ARTICLE)
+
+    install_transport(handler)
+    result = await web_fetch("https://site.test/article", save_to=123)  # type: ignore[arg-type]
+
+    assert result["ok"] is False
+    assert "save_to" in result["error"]
+    assert calls == 0
+
+
+@pytest.mark.asyncio
 async def test_web_fetch_cache_hits(
     install_transport: Callable[..., Any],
 ) -> None:

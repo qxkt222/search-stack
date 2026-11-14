@@ -8,7 +8,7 @@
 | 工具 | 作用 |
 |---|---|
 | `web_search` | 调 SearXNG JSON API，返回标题/URL/摘要/引擎/分数 |
-| `web_fetch` | 抓取网页并用 trafilatura 提取正文 |
+| `web_fetch` | 抓取网页并用 trafilatura 提取正文；可选 `save_to` 把正文另存为 UTF-8 文件 |
 | `search_and_fetch` | 搜索后并发抓取前 N 条正文 |
 | `multi_search` | 多个 query 并发搜索，按 URL 归一化去重合并 |
 | `search_compare` | 同一个 query 按引擎分别搜索，便于对比 |

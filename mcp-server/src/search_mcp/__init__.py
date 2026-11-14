@@ -1,3 +1,5 @@
 """Search MCP server backed by a SearXNG instance."""
 
-__version__ = "0.1.0"
+from .core import VERSION as __version__
+
+__all__ = ["__version__"]

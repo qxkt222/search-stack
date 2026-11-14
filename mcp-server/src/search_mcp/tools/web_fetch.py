@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
 from .. import client, core
-from ..extract import extract_content
+from ..extract import MAX_LINKS, extract_content
 
 _EXCERPT_CHARS = 300
-_MAX_LINKS = 50
 
 
 def validate_url(url: str) -> str:
@@ -29,10 +29,19 @@ def _excerpt(text: str) -> str:
     return " ".join(text.split())[:_EXCERPT_CHARS]
 
 
+def _save_text(path: str, text: str) -> None:
+    """Write extracted text to ``path`` as UTF-8, creating parent dirs."""
+
+    target = Path(path).expanduser()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+
+
 async def fetch_page(
     url: str,
     max_chars: int = 20000,
     include_links: bool = False,
+    save_to: str | None = None,
 ) -> dict[str, Any]:
     """Implementation shared with ``search_and_fetch`` (returns an envelope)."""
 
@@ -41,6 +50,7 @@ async def fetch_page(
         core.check_int(max_chars, "max_chars", 1000, 200000)
         if not isinstance(include_links, bool):
             raise ValueError("include_links must be a boolean")
+        save_path = core.check_optional_text(save_to, "save_to")
 
         cfg = core.get_config()
         key = core.cache_key(
@@ -53,6 +63,8 @@ async def fetch_page(
         )
         cached = core.CACHE.get(key, cfg.fetch_ttl)
         if not core.is_missing(cached):
+            if save_path:
+                _save_text(save_path, cached["text"])
             return core.ok(cached)
 
         response = await client.fetch(url)
@@ -84,7 +96,10 @@ async def fetch_page(
             "truncated": truncated,
         }
         if include_links:
-            payload["links"] = extracted["links"][:_MAX_LINKS]
+            payload["links"] = extracted["links"][:MAX_LINKS]
+
+        if save_path:
+            _save_text(save_path, text)
 
         core.CACHE.set(key, payload, cfg.fetch_ttl)
         return core.ok(payload)
@@ -96,6 +111,7 @@ async def web_fetch(
     url: str,
     max_chars: int = 20000,
     include_links: bool = False,
+    save_to: str | None = None,
 ) -> dict[str, Any]:
     """Fetch a URL and extract the main article text.
 
@@ -103,13 +119,20 @@ async def web_fetch(
         url: Absolute http(s) URL to fetch.
         max_chars: Maximum characters of text to return (1000-200000).
         include_links: Include up to 50 absolute links found on the page.
+        save_to: Optional path to also write the extracted text to (UTF-8).
+            Nothing is written when this is omitted.
 
     Returns:
         ``{"ok": true, "result": {url, final_url, status, title, text,
         excerpt, chars, truncated, links?}}`` or ``{"ok": false, "error": "..."}``.
     """
 
-    return await fetch_page(url, max_chars=max_chars, include_links=include_links)
+    return await fetch_page(
+        url,
+        max_chars=max_chars,
+        include_links=include_links,
+        save_to=save_to,
+    )
 
 
 def register(mcp: Any) -> None:

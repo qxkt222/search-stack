@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import math
 from typing import Any
 
@@ -70,32 +69,21 @@ async def multi_search(
         language = core.check_optional_text(language, "language")
 
         unique_queries = list(dict.fromkeys(queries))
-        semaphore = asyncio.Semaphore(concurrency)
 
-        async def run_one(query: str) -> tuple[str, list[dict[str, Any]], str | None]:
-            async with semaphore:
-                try:
-                    result = await client.search(
-                        query,
-                        max_results=max_results,
-                        categories=categories,
-                        engines=engines,
-                        time_range=time_range,
-                        pageno=pageno,
-                        language=language,
-                    )
-                    return query, list(result.get("results") or []), None
-                except Exception as exc:
-                    return query, [], str(exc) or type(exc).__name__
+        async def run_search(query: str) -> dict[str, Any]:
+            return await client.search(
+                query,
+                max_results=max_results,
+                categories=categories,
+                engines=engines,
+                time_range=time_range,
+                pageno=pageno,
+                language=language,
+            )
 
-        outcomes = await asyncio.gather(*(run_one(q) for q in unique_queries))
-
-        per_query: dict[str, list[dict[str, Any]]] = {}
-        errors: dict[str, str] = {}
-        for query, results, error in outcomes:
-            per_query[query] = results
-            if error:
-                errors[query] = error
+        per_query, errors = await client.search_many(
+            unique_queries, run_search, limit=concurrency
+        )
 
         merged: list[dict[str, Any]] = []
         index: dict[str, int] = {}

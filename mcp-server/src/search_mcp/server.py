@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
 import search_mcp.tools as tools_package
+from search_mcp.core import APP_NAME, VERSION
 
 mcp = MCPServer(
-    "search-mcp",
-    version="0.1.0",
+    APP_NAME,
+    version=VERSION,
     instructions=(
         "Search the web through a SearXNG instance and extract readable text "
         "from result pages. All tools return an {ok, result} or {ok, error} "

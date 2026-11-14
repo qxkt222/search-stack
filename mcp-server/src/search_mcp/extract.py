@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlsplit
-
-import trafilatura
-from bs4 import BeautifulSoup
 
 from .core import normalize_url
 
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from bs4 import BeautifulSoup
+
 _BLOCK_TAGS = ("script", "style", "noscript", "template", "svg", "iframe", "canvas")
-_MAX_LINKS = 50
+MAX_LINKS = 50
 
 
 def _parse(html: str) -> BeautifulSoup:
+    # Imported here so the HTML stack (bs4 + lxml) stays out of server startup.
+    from bs4 import BeautifulSoup
+
     try:
         return BeautifulSoup(html, "lxml")
     except Exception:
@@ -68,7 +71,7 @@ def _links(soup: BeautifulSoup, base_url: str) -> list[str]:
             continue
         seen.add(key)
         found.append(absolute)
-        if len(found) >= _MAX_LINKS:
+        if len(found) >= MAX_LINKS:
             break
     return found
 
@@ -80,6 +83,9 @@ def extract_content(
     include_links: bool = False,
 ) -> dict[str, Any]:
     """Extract title, main text and (optionally) absolute links from HTML."""
+
+    # Imported here: trafilatura costs ~125 ms and is only needed on a fetch.
+    import trafilatura
 
     soup = _parse(html)
     title = _title(soup)
